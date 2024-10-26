@@ -13,10 +13,18 @@ export default function Index() {
       {/* <View style={styles.imageContainer}>
         <ImageViewer imgSource={PlaceholderImage} />
       </View> */}
-      <View style={styles.footerContainer}>
+      <View style={styles.Container}>
         <Button label="Weather" />
       </View>
-      <View style={styles.footerContainer}>
+      <View style={styles.gridContainer}>
+        <Button label="Crop 1" />
+        <Button label="Crop 2" />
+        <Button label="Crop 3" />
+        <Button label="Crop 4" />
+      </View>
+
+
+      {/* <View style={styles.footerContainer}>
         <Button label="Crop 1" />
       </View>
       <View style={styles.footerContainer}>
@@ -27,7 +35,7 @@ export default function Index() {
       </View>
       <View style={styles.footerContainer}>
         <Button label="Crop 4" />
-      </View>
+      </View> */}
     </View>
   );
 }
@@ -42,8 +50,17 @@ const styles = StyleSheet.create({
   imageContainer: {
     flex: 1,
   },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
   footerContainer: {
-    flex: 1 / 3,
+    flexBasis: '45%', // Each button takes 45% of the row width
+    marginBottom: 20, // Space between rows
     alignItems: 'center',
   },
 });
