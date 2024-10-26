@@ -25,9 +25,9 @@ export default function Index() {
       <View style={styles.footerContainer}>
         <Button label="Crop 3" />
       </View>
-      {/* <View style={styles.footerContainer}>
-        <Button label="Weather" />
-      </View> */}
+      <View style={styles.footerContainer}>
+        <Button label="Crop 4" />
+      </View>
     </View>
   );
 }
@@ -35,8 +35,9 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#376443',
-     alignItems: 'center',
+    backgroundColor: '#fff',
+    color: '000',
+    alignItems: 'center',
   },
   imageContainer: {
     flex: 1,

@@ -6,14 +6,15 @@ export default function TabLayout() {
     return (
         <Tabs
         screenOptions={{
-          tabBarActiveTintColor: '#ffd33d',
+          tabBarActiveTintColor: '#376443', // color of the icons at the bottom
           headerStyle: {
             backgroundColor: '#376443', // the header color
           },
           headerShadowVisible: false,
           headerTintColor: '#fff',
           tabBarStyle: {
-          backgroundColor: '#376443',
+          backgroundColor: '#fff',
+          paddingBottom: 10,
           },
         }}
         >
@@ -22,7 +23,7 @@ export default function TabLayout() {
           options={{
             title: 'Home',
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={24} />
+              <Ionicons name={focused ? 'home-sharp' : 'home-outline'} color={color} size={28} />
             ),
           }}
         />
@@ -31,7 +32,7 @@ export default function TabLayout() {
           options={{
             title: 'Reminders',
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? 'notifications' : 'notifications-outline'} color={color} size={24} />
+              <Ionicons name={focused ? 'notifications' : 'notifications-outline'} color={color} size={28} />
             ),
           }}
         />
@@ -40,7 +41,7 @@ export default function TabLayout() {
           options={{
             title: 'Account',
             tabBarIcon: ({ color, focused }) => (
-              <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={24}/>
+              <Ionicons name={focused ? 'information-circle' : 'information-circle-outline'} color={color} size={28}/>
             ),
           }}
         />

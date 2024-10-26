@@ -11,8 +11,13 @@ type Props = {
 
 const styles = StyleSheet.create({
        image: {
-        width: 350,
-        height: 540,
-        // borderRadius: 18,
+        // top: 10,
+        // bottom: 10,
+        // left: 90,
+        width: 300,
+        height: 300,
+        // width: 350,
+        // height: 540,
+        borderRadius: 100,
       },
 });
