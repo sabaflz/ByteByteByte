@@ -14,10 +14,10 @@ const styles = StyleSheet.create({
         // top: 10,
         // bottom: 10,
         // left: 90,
-        width: 300,
-        height: 300,
+        width: 80,                 // Adjust image size
+        height: 80,
         // width: 350,
         // height: 540,
-        borderRadius: 100,
+        borderRadius: 50,
       },
 });
