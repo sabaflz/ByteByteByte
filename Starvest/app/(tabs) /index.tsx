@@ -1,4 +1,4 @@
-import { Text, View, Pressable, StyleSheet } from 'react-native';
+import { Text, View, Pressable, StyleSheet} from 'react-native';
 import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 import { useState } from 'react';
@@ -31,6 +31,7 @@ export default function Index() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [iconUrl, setIconUrl] = useState<string | null>(null); // 
 
   const fetchWeather = async () => {
     try {
@@ -47,6 +48,15 @@ export default function Index() {
       
       const data: WeatherData = await response.json();
       setWeatherData(data);
+
+      const iconResponse = await fetch(
+        'https://api.openweathermap.org/data/2.5/weather?lat=52.52&lon=13.41&appid=a5166d630224309d6598970cb1680515'
+      ); //
+      const iconData = await iconResponse.json(); //
+      const iconCode = iconData.weather[0].icon; //
+      const iconDescription = iconData.weather[0].description; //
+      setIconUrl(`https://openweathermap.org/img/wn/${iconCode}@2x.png`); // 
+
     } catch (err) {
       setError('Failed to fetch weather data');
       console.error(err);
@@ -75,6 +85,8 @@ export default function Index() {
           <Text style={styles.weatherText}><Ionicons name={'thermometer-outline'} color={'#376443'} size={24} />{currentTemp}°C</Text>
           <Text style={styles.weatherText}><Ionicons name={'water-outline'} color={'#376443'} size={24} /> {currentPrecip}%</Text> 
           <Text style={styles.weatherText}><FontAwesome5 name="wind" size={24} color={'#376443'} /> {currentWind} mph</Text>
+          <Text style={styles.weatherText}>{iconUrl && (<Image source={{ uri: iconUrl }} style={styles.weatherIcon} />)}</Text>
+          {/* <Text style={styles.weatherText}>{iconDescription}</Text> */}
         </View>
       );
     }
@@ -91,32 +103,32 @@ export default function Index() {
   return (
     <View style={styles.container}>
       {renderWeatherData()}
-      <View style={styles.footerContainer}>
+      {/* <View style={styles.footerContainer}> */}
         <View style={styles.buttonContainer}>
           <Pressable style={styles.button} onPress={fetchWeather}>
             <Text style={styles.buttonLabelweather}>{'Weather'}</Text>
           </Pressable>
         </View>
-      </View>
+      {/* </View> */}
       {/* <View style={styles.footerContainer}> */}
 
       <View style={styles.buttonContainer}>
         <View style={styles.pairContainer}>
           <Pressable style={styles.button} onPress={fetchWeather}>
             <CropImageViewer style={styles.crops} imgSource={crop1} />
-            <Text style={styles.buttonLabel}>Crop 1</Text>
+            <Text style={styles.buttonLabel}>Sugar Cane</Text>
           </Pressable>
         </View>
         <View style={styles.pairContainer}>
           <Pressable style={styles.button} onPress={fetchWeather}>
             <CropImageViewer style={styles.crops} imgSource={crop2} />
-            <Text style={styles.buttonLabel}>Crop 2</Text>
+            <Text style={styles.buttonLabel}>Potatoes</Text>
           </Pressable>
         </View>
         <View style={styles.pairContainer}>
           <Pressable style={styles.button} onPress={fetchWeather}>
             <CropImageViewer style={styles.crops} imgSource={crop3} />
-            <Text style={styles.buttonLabel}>Crop 3</Text>
+            <Text style={styles.buttonLabel}>Wheat</Text>
           </Pressable>
         </View>
       </View>
@@ -150,7 +162,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -20,
+    // marginTop: -20,
+    // borderWidth: 1,
+    // borderColor: '#376443',
   },
   weatherContainer: {
     padding: 10,
@@ -158,6 +172,8 @@ const styles = StyleSheet.create({
     // flexDirection: 'row',
     backgroundColor: '#f0f0f0',
     borderRadius: 10,
+    // borderWidth: 1,
+    // borderColor: '#376443',
     width: '80%',
   },
   weatherText: {
@@ -183,6 +199,8 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 10,
     justifyContent: 'center',
+    // borderWidth: 1,
+    // borderColor: '#376443',
   },
   button: {
     borderRadius: 10,
@@ -196,9 +214,15 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   buttonLabelweather: {
-    color: '#000',
+    color: '#376443',
     fontSize: 16,
     textAlign: 'center',
+    fontWeight: 'bold',
+    borderWidth: 1,
+    borderColor: '#376443',
+    padding: 5,
+    borderRadius: 5,
+    
   },
   buttonLabel: {
     color: '#000',
@@ -213,6 +237,12 @@ const styles = StyleSheet.create({
     width: 50,                 // Adjust image size
     height: 50,
     marginRight: 20,           // Adds space between image and text
+  },
+  weatherIcon: {
+    width: 50,  // Adjust the size of the icon
+    height: 50,
+    alignSelf: 'center', // Center the icon
+    marginTop: 10,  // Add some spacing from the text
   },
   // crops: {
   //   width: 20,
