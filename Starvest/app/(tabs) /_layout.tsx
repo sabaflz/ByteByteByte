@@ -35,6 +35,15 @@ export default function TabLayout() {
             ),
           }}
         />
+        <Tabs.Screen
+          name="reminders"
+          options={{
+            title: 'Reminders',
+            tabBarIcon: ({ color, focused }) => (
+              <Ionicons name={focused ? 'notifications' : 'notifications-outline'} color={color} size={24} />
+            ),
+          }}
+        />
       </Tabs>
     );
   }

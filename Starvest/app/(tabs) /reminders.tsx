@@ -1,9 +1,9 @@
 import { Text, View, StyleSheet } from 'react-native';
 
-export default function AccountScreen() {
+export default function RemindersScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Account screen</Text>
+      <Text style={styles.text}>Reminders screen</Text>
     </View>
   );
 }
