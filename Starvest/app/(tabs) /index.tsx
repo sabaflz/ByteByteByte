@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   weatherContainer: {
     padding: 10,
     margin: 10,
-    flexDirection: 'row',
+    // flexDirection: 'row',
     backgroundColor: '#f0f0f0',
     borderRadius: 10,
     width: '80%',
