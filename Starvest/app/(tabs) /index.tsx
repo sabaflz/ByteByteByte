@@ -1,20 +1,83 @@
 import { Text, View, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
 import { Image } from 'expo-image';
+import { useState } from 'react';
 
 import Button from '@/components/Button';
-// import ImageViewer from "@/components/ImageViewer";
+
+// Define interface for the weather API response
+interface WeatherData {
+  hourly: {
+    temperature_2m: number[];
+    precipitation: number[];
+    time: string[];
+  };
+  hourly_units: {
+    temperature_2m: string;
+    precipitation: string;
+  };
+}
 
 const PlaceholderImage = require('@/assets/images/background-image.png');
 
 export default function Index() {
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchWeather = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch(
+        'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m,precipitation'
+      );
+      
+      if (!response.ok) {
+        throw new Error('Weather data fetch failed');
+      }
+      
+      const data: WeatherData = await response.json();
+      setWeatherData(data);
+    } catch (err) {
+      setError('Failed to fetch weather data');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderWeatherData = () => {
+    if (loading) {
+      return <Text style={styles.weatherText}>Loading weather data...</Text>;
+    }
+
+    if (error) {
+      return <Text style={styles.errorText}>{error}</Text>;
+    }
+
+    if (weatherData) {
+      const currentHourIndex = new Date().getHours();
+      const currentTemp = weatherData.hourly.temperature_2m[currentHourIndex];
+      const currentPrecip = weatherData.hourly.precipitation[currentHourIndex];
+
+      return (
+        <View style={styles.weatherContainer}>
+          <Text style={styles.weatherText}>Current Temperature: {currentTemp}°C</Text>
+          <Text style={styles.weatherText}>Precipitation: {currentPrecip}mm</Text>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <View style={styles.container}>
-      {/* <View style={styles.imageContainer}>
-        <ImageViewer imgSource={PlaceholderImage} />
-      </View> */}
+      {renderWeatherData()}
       <View style={styles.footerContainer}>
-        <Button label="Weather" />
+        <Button label="Weather" onPress={fetchWeather} />
       </View>
       <View style={styles.footerContainer}>
         <Button label="Crop 1" />
@@ -25,9 +88,9 @@ export default function Index() {
       <View style={styles.footerContainer}>
         <Button label="Crop 3" />
       </View>
-      {/* <View style={styles.footerContainer}>
-        <Button label="Weather" />
-      </View> */}
+      <View style={styles.footerContainer}>
+        <Button label="Crop 4" />
+      </View>
     </View>
   );
 }
@@ -35,8 +98,8 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#376443',
-     alignItems: 'center',
+    backgroundColor: '#fff',
+    alignItems: 'center',
   },
   imageContainer: {
     flex: 1,
@@ -44,5 +107,23 @@ const styles = StyleSheet.create({
   footerContainer: {
     flex: 1 / 3,
     alignItems: 'center',
+  },
+  weatherContainer: {
+    padding: 20,
+    margin: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    width: '80%',
+  },
+  weatherText: {
+    fontSize: 16,
+    marginVertical: 5,
+    textAlign: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+    margin: 10,
   },
 });
