@@ -44,7 +44,7 @@ export default function Index() {
 
       //
       const iconResponse = await fetch(
-        'https://api.openweathermap.org/data/2.5/weather?lat=52.52&lon=13.41&appid=YOUR_API_KEY'
+        'https://api.openweathermap.org/data/2.5/weather?lat=52.52&lon=13.41&appid=a5166d630224309d6598970cb1680515'
       ); // 
       const iconData = await iconResponse.json(); //
       const iconCode = iconData.weather[0].icon; //
