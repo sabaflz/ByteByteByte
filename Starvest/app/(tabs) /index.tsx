@@ -9,12 +9,14 @@ import Button from '@/components/Button';
 interface WeatherData {
   hourly: {
     temperature_2m: number[];
-    precipitation: number[];
+    precipitation_probability: number[]; //
+    wind_speed_10m: number[]; // 
     time: string[];
   };
   hourly_units: {
     temperature_2m: string;
-    precipitation: string;
+    precipitation_probability: string;  //
+    wind_speed_10m: string; //
   };
 }
 
@@ -31,7 +33,7 @@ export default function Index() {
       setError(null);
       
       const response = await fetch(
-        'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m,precipitation'
+        'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m,precipitation_probability,wind_speed_10m' //
       );
       
       if (!response.ok) {
@@ -60,12 +62,14 @@ export default function Index() {
     if (weatherData) {
       const currentHourIndex = new Date().getHours();
       const currentTemp = weatherData.hourly.temperature_2m[currentHourIndex];
-      const currentPrecip = weatherData.hourly.precipitation[currentHourIndex];
+      const currentPrecip = weatherData.hourly.precipitation_probability[currentHourIndex]; //
+      const currentWind = weatherData.hourly.wind_speed_10m[currentHourIndex];  // 
 
       return (
         <View style={styles.weatherContainer}>
           <Text style={styles.weatherText}>Current Temperature: {currentTemp}°C</Text>
-          <Text style={styles.weatherText}>Precipitation: {currentPrecip}mm</Text>
+          <Text style={styles.weatherText}>Precipitation Chance: {currentPrecip}%</Text> 
+          <Text style={styles.weatherText}>Wind Speed: {currentWind} mph</Text> // 
         </View>
       );
     }
