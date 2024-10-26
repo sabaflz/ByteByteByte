@@ -1,12 +1,12 @@
-import { Text, View, Pressable, StyleSheet } from 'react-native';
+import { Text, View, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { Link } from 'expo-router';
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { FontAwesome5 } from 'react-native-vector-icons';
 import ImageViewer from "@/components/ImageViewer";
 import CropImageViewer from "@/components/CropImageViewer";
-
+import { Modal } from 'react-native';
 
 // import Button from '@/components/Button';
 
@@ -27,10 +27,18 @@ interface WeatherData {
 
 const PlaceholderImage = require('@/assets/images/background-image.png');
 
+// Add this new import at the top of the file
+const PopupImage1 = require('@/assets/images/SugarCaneDes.png');
+const PopupImage2 = require('@/assets/images/PotatoDes.png');
+const PopupImage3 = require('@/assets/images/WheatDes.png');
+
+
 export default function Index() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [iconUrl, setIconUrl] = useState<string | null>(null); // 
+  const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
 
   const fetchWeather = async () => {
     try {
@@ -47,12 +55,27 @@ export default function Index() {
       
       const data: WeatherData = await response.json();
       setWeatherData(data);
+
+      const iconResponse = await fetch(
+        'https://api.openweathermap.org/data/2.5/weather?lat=52.52&lon=13.41&appid=a5166d630224309d6598970cb1680515'
+      ); //
+      const iconData = await iconResponse.json(); //
+      const iconCode = iconData.weather[0].icon; //
+      const iconDescription = iconData.weather[0].description; //
+      setIconUrl(`https://openweathermap.org/img/wn/${iconCode}@2x.png`); // 
+
     } catch (err) {
       setError('Failed to fetch weather data');
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+  const crop1Function = () => {
+    return (
+      <CropImageViewer imgSource={crop1} />
+    );
+    console.log('crop1');
   };
 
   const renderWeatherData = () => {
@@ -75,6 +98,10 @@ export default function Index() {
           <Text style={styles.weatherText}><Ionicons name={'thermometer-outline'} color={'#376443'} size={24} />{currentTemp}°C</Text>
           <Text style={styles.weatherText}><Ionicons name={'water-outline'} color={'#376443'} size={24} /> {currentPrecip}%</Text> 
           <Text style={styles.weatherText}><FontAwesome5 name="wind" size={24} color={'#376443'} /> {currentWind} mph</Text>
+          <View style={styles.weatherIcon}>
+            <Text style={styles.weatherText}>{iconUrl && (<Image source={{ uri: iconUrl }} style={styles.weatherIcon} />)}</Text>
+          </View>
+          {/* <Text style={styles.weatherText}>{iconDescription}</Text> */}
         </View>
       );
     }
@@ -88,51 +115,80 @@ export default function Index() {
   const crop3 = require('@/assets/images/wheat.png');
   const crop4 = require('@/assets/images/corn.png');
 
+  const openCropModal1 = () => {
+    setSelectedCrop(PopupImage1);
+  };
+  const openCropModal2 = () => {
+    setSelectedCrop(PopupImage2);
+  };
+  const openCropModal3 = () => {
+    setSelectedCrop(PopupImage3);
+  };
+
+  const closeCropModal = () => {
+    setSelectedCrop(null);
+  };
+
   return (
     <View style={styles.container}>
-      {renderWeatherData()}
-      <View style={styles.footerContainer}>
+      {/* Image shows up regarding to the weather */}
+      <View style={styles.weatherContainer}>
+        {renderWeatherData()}
+      </View>
+      {/* <View style={styles.footerContainer}> */}
         <View style={styles.buttonContainer}>
           <Pressable style={styles.button} onPress={fetchWeather}>
             <Text style={styles.buttonLabelweather}>{'Weather'}</Text>
           </Pressable>
         </View>
-      </View>
+      {/* </View> */}
       {/* <View style={styles.footerContainer}> */}
 
       <View style={styles.buttonContainer}>
         <View style={styles.pairContainer}>
-          <Pressable style={styles.button} onPress={fetchWeather}>
+          <Pressable style={styles.button} onPress={openCropModal1}>
             <CropImageViewer style={styles.crops} imgSource={crop1} />
-            <Text style={styles.buttonLabel}>Crop 1</Text>
+            <Text style={styles.buttonLabel}>Sugar Cane</Text>
           </Pressable>
         </View>
         <View style={styles.pairContainer}>
-          <Pressable style={styles.button} onPress={fetchWeather}>
+          <Pressable style={styles.button} onPress={openCropModal2}>
             <CropImageViewer style={styles.crops} imgSource={crop2} />
-            <Text style={styles.buttonLabel}>Crop 2</Text>
+            <Text style={styles.buttonLabel}>Potatoes</Text>
           </Pressable>
         </View>
         <View style={styles.pairContainer}>
-          <Pressable style={styles.button} onPress={fetchWeather}>
+          <Pressable style={styles.button} onPress={openCropModal3}>
             <CropImageViewer style={styles.crops} imgSource={crop3} />
-            <Text style={styles.buttonLabel}>Crop 3</Text>
+            <Text style={styles.buttonLabel}>Wheat</Text>
           </Pressable>
         </View>
       </View>
-      {/* </View> */}
-      {/* <View style={styles.footerContainer}>
-        <Button label="Crop 1" />
-      </View>
-      <View style={styles.footerContainer}>
-        <Button label="Crop 2" />
-      </View>
-      <View style={styles.footerContainer}>
-        <Button label="Crop 3" />
-      </View>
-      <View style={styles.footerContainer}>
-        <Button label="Crop 4" />
-      </View> */}
+
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={selectedCrop !== null}
+        onRequestClose={closeCropModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Pressable style={styles.closeButton} onPress={closeCropModal}>
+              <Ionicons name="close" size={24} color="white" />
+            </Pressable>
+            <ScrollView 
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollViewContent}
+            >
+              {selectedCrop && (
+                <View style={styles.imageContainer}>
+                  <Image source={selectedCrop} style={styles.modalImage} />
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -150,7 +206,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -20,
+    // marginTop: -20,
+    // borderWidth: 1,
+    // borderColor: '#376443',
   },
   weatherContainer: {
     padding: 10,
@@ -158,6 +216,8 @@ const styles = StyleSheet.create({
     // flexDirection: 'row',
     backgroundColor: '#f0f0f0',
     borderRadius: 10,
+    // borderWidth: 1,
+    // borderColor: '#376443',
     width: '80%',
   },
   weatherText: {
@@ -183,22 +243,32 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 10,
     justifyContent: 'center',
+    // borderWidth: 1,
+    // borderColor: '#376443',
   },
   button: {
     borderRadius: 10,
     width: '100%',
-    height: '100%',
+    // height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    // borderWidth: 1,
+    // borderColor: '#376443',
   },
   buttonIcon: {
     paddingRight: 8,
   },
   buttonLabelweather: {
-    color: '#000',
+    color: '#376443',
     fontSize: 16,
     textAlign: 'center',
+    fontWeight: 'bold',
+    borderWidth: 1,
+    borderColor: '#376443',
+    padding: 5,
+    borderRadius: 5,
+    
   },
   buttonLabel: {
     color: '#000',
@@ -214,6 +284,16 @@ const styles = StyleSheet.create({
     height: 50,
     marginRight: 20,           // Adds space between image and text
   },
+  weatherIcon: {
+    width: 50,  // Adjust the size of the icon
+    height: 50,
+    flexDirection: 'row',
+    // borderWidth: 1,
+    // borderColor: '#376443',
+    alignSelf: 'center', // Center the icon
+    // alignSelf: 'center', // Center the icon
+    marginTop: 10,  // Add some spacing from the text
+  },
   // crops: {
   //   width: 20,
   //   height: 18,
@@ -222,4 +302,57 @@ const styles = StyleSheet.create({
   //   justifyContent: 'center',
   //   padding: 3,
   // },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    width: '95%',
+    height: '95%',
+    position: 'relative',
+  },
+  scrollView: {
+    width: '100%',
+    height: '100%',
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  imageContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: 321,
+    height: 699,
+    resizeMode: 'contain',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#376443',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1, // Ensure the button is above the image
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
