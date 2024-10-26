@@ -1,6 +1,4 @@
-import { Text, View, StyleSheet } from 'react-native';
-import { Link } from 'expo-router';
-import { Image } from 'expo-image';
+import { Text, View, StyleSheet, Image } from 'react-native'; // 
 import { useState } from 'react';
 
 import Button from '@/components/Button';
@@ -9,14 +7,14 @@ import Button from '@/components/Button';
 interface WeatherData {
   hourly: {
     temperature_2m: number[];
-    precipitation_probability: number[]; //
-    wind_speed_10m: number[]; // 
+    precipitation_probability: number[];
+    wind_speed_10m: number[];
     time: string[];
   };
   hourly_units: {
     temperature_2m: string;
-    precipitation_probability: string;  //
-    wind_speed_10m: string; //
+    precipitation_probability: string;
+    wind_speed_10m: string;
   };
 }
 
@@ -26,6 +24,7 @@ export default function Index() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [iconUrl, setIconUrl] = useState<string | null>(null); // 
 
   const fetchWeather = async () => {
     try {
@@ -33,7 +32,7 @@ export default function Index() {
       setError(null);
       
       const response = await fetch(
-        'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m,precipitation_probability,wind_speed_10m' //
+        'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m,precipitation_probability,wind_speed_10m'
       );
       
       if (!response.ok) {
@@ -42,6 +41,15 @@ export default function Index() {
       
       const data: WeatherData = await response.json();
       setWeatherData(data);
+
+      //
+      const iconResponse = await fetch(
+        'https://api.openweathermap.org/data/2.5/weather?lat=52.52&lon=13.41&appid=YOUR_API_KEY'
+      ); // 
+      const iconData = await iconResponse.json(); //
+      const iconCode = iconData.weather[0].icon; //
+      setIconUrl(`https://openweathermap.org/img/wn/${iconCode}@2x.png`); // 
+
     } catch (err) {
       setError('Failed to fetch weather data');
       console.error(err);
@@ -62,14 +70,15 @@ export default function Index() {
     if (weatherData) {
       const currentHourIndex = new Date().getHours();
       const currentTemp = weatherData.hourly.temperature_2m[currentHourIndex];
-      const currentPrecip = weatherData.hourly.precipitation_probability[currentHourIndex]; //
-      const currentWind = weatherData.hourly.wind_speed_10m[currentHourIndex];  // 
+      const currentPrecip = weatherData.hourly.precipitation_probability[currentHourIndex];
+      const currentWind = weatherData.hourly.wind_speed_10m[currentHourIndex];
 
       return (
         <View style={styles.weatherContainer}>
           <Text style={styles.weatherText}>Current Temperature: {currentTemp}°C</Text>
-          <Text style={styles.weatherText}>Precipitation Chance: {currentPrecip}%</Text> 
-          <Text style={styles.weatherText}>Wind Speed: {currentWind} mph</Text> // 
+          <Text style={styles.weatherText}>Precipitation Chance: {currentPrecip}%</Text>
+          <Text style={styles.weatherText}>Wind Speed: {currentWind} mph</Text>
+          {iconUrl && <Image source={{ uri: iconUrl }} style={styles.weatherIcon} />} {/* Display the icon if available */}
         </View>
       );
     }
@@ -124,10 +133,15 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     textAlign: 'center',
   },
+  weatherIcon: {
+    width: 100,
+    height: 100,
+    marginTop: 10,
+  }, 
   errorText: {
-    color: 'red',
-    fontSize: 16,
-    textAlign: 'center',
-    margin: 10,
+    color: 'red',  //
+    fontSize: 16,   //
+    textAlign: 'center',  //
+    margin: 10,  //
   },
 });
