@@ -3,19 +3,31 @@ import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 
 import Button from '@/components/Button';
-import ImageViewer from "@/components/ImageViewer";
+// import ImageViewer from "@/components/ImageViewer";
 
 const PlaceholderImage = require('@/assets/images/background-image.png');
 
 export default function Index() {
   return (
     <View style={styles.container}>
-      <View style={styles.imageContainer}>
+      {/* <View style={styles.imageContainer}>
         <ImageViewer imgSource={PlaceholderImage} />
+      </View> */}
+      <View style={styles.footerContainer}>
+        <Button label="Weather" />
       </View>
       <View style={styles.footerContainer}>
-        <Button label="Continue" />
+        <Button label="Crop 1" />
       </View>
+      <View style={styles.footerContainer}>
+        <Button label="Crop 2" />
+      </View>
+      <View style={styles.footerContainer}>
+        <Button label="Crop 3" />
+      </View>
+      {/* <View style={styles.footerContainer}>
+        <Button label="Weather" />
+      </View> */}
     </View>
   );
 }
