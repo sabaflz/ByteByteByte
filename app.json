@@ -27,7 +27,13 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Starvest uses your location to get local weather, soil and crop disease forecasts."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
