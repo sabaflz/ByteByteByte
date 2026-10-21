@@ -9,10 +9,14 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from services import pest_risk
+from services import pest_risk, recommendations
+from services.cache import TTLCache, location_key
 from services.data_sources import DataSourceError, get_conditions
 
 load_dotenv()
+
+# AI calls cost money and the inputs change slowly, so reuse an answer for an hour.
+recommendation_cache = TTLCache(ttl_seconds=60 * 60)
 
 
 class BadRequest(ValueError):
@@ -52,6 +56,22 @@ def create_app() -> Flask:
 		data = await get_conditions(lat, lon)
 		data["pest_risk"] = pest_risk.assess(data["weather"]["hourly"])
 		return jsonify(data)
+
+	@app.post("/api/recommendations")
+	async def recommend():
+		lat, lon = parse_location(request.get_json(silent=True) or {})
+		key = location_key(lat, lon)
+		cached = recommendation_cache.get(key)
+		if cached is not None:
+			return jsonify({**cached, "cached": True})
+
+		data = await get_conditions(lat, lon)
+		risks = pest_risk.assess(data["weather"]["hourly"])
+		result = await recommendations.recommend(data, risks)
+		body = {**result, "pest_risk": risks, "warnings": data["warnings"]}
+		if result["source"] == "openai":  # don't pin a fallback answer for an hour
+			recommendation_cache.set(key, body)
+		return jsonify({**body, "cached": False})
 
 	return app
 
