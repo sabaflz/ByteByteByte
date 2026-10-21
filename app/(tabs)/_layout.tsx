@@ -45,6 +45,8 @@ export default function TabLayout() {
             ),
           }}
         />
+        {/* Placeholder screen (no component yet); keep it out of the tab bar. */}
+        <Tabs.Screen name="loadingscreen" options={{ href: null }} />
       </Tabs>
     );
   }

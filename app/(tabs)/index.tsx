@@ -3,7 +3,7 @@ import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 import React, { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { FontAwesome5 } from 'react-native-vector-icons';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import ImageViewer from "@/components/ImageViewer";
 import CropImageViewer from "@/components/CropImageViewer";
 import { Modal } from 'react-native';
@@ -198,9 +198,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     alignItems: 'center',
-  },
-  imageContainer: {
-    flex: 1,
   },
   footerContainer: {
     flex: 1,
