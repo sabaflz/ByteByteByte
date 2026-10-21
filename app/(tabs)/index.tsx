@@ -1,85 +1,82 @@
-import { Text, View, Pressable, StyleSheet, ScrollView } from 'react-native';
-import { Link } from 'expo-router';
+import { Text, View, Pressable, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { FontAwesome5 } from 'react-native-vector-icons';
-import ImageViewer from "@/components/ImageViewer";
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import CropImageViewer from "@/components/CropImageViewer";
 import { Modal } from 'react-native';
-
-// import Button from '@/components/Button';
-
-// Define interface for the weather API response
-interface WeatherData {
-  hourly: {
-    temperature_2m: number[];
-    precipitation_probability: number[]; //
-    wind_speed_10m: number[]; // 
-    time: string[];
-  };
-  hourly_units: {
-    temperature_2m: string;
-    precipitation_probability: string;  //
-    wind_speed_10m: string; //
-  };
-}
-
-const PlaceholderImage = require('@/assets/images/background-image.png');
+import {
+  type Conditions,
+  type Recommendations,
+  type Risk,
+  fetchConditions,
+  fetchRecommendations,
+} from '@/lib/api';
+import { useFarmLocation } from '@/hooks/useFarmLocation';
 
 // Add this new import at the top of the file
 const PopupImage1 = require('@/assets/images/SugarCaneDes.png');
 const PopupImage2 = require('@/assets/images/PotatoDes.png');
 const PopupImage3 = require('@/assets/images/WheatDes.png');
 
+const RISK_COLORS: Record<Risk, string> = { low: '#376443', moderate: '#c98a1b', high: '#b3261e' };
+const SUITABILITY_COLORS = { good: '#376443', fair: '#c98a1b', poor: '#b3261e' } as const;
+
+const capitalize = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+
+/** WMO weather code (Open-Meteo) -> Ionicons name. */
+function weatherIcon(code: number | null): keyof typeof Ionicons.glyphMap {
+  if (code === null) return 'cloud-outline';
+  if (code === 0) return 'sunny-outline';
+  if (code <= 3) return 'partly-sunny-outline';
+  if (code === 45 || code === 48) return 'cloudy-outline';
+  if (code >= 95) return 'thunderstorm-outline';
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return 'snow-outline';
+  return 'rainy-outline';
+}
 
 export default function Index() {
-  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+  const location = useFarmLocation();
+  const [conditions, setConditions] = useState<Conditions | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [iconUrl, setIconUrl] = useState<string | null>(null); // 
+  const [advice, setAdvice] = useState<Recommendations | null>(null);
+  const [adviceLoading, setAdviceLoading] = useState(false);
+  const [adviceError, setAdviceError] = useState<string | null>(null);
   const [selectedCrop, setSelectedCrop] = useState<string | null>(null);
 
-  const fetchWeather = async () => {
+  const loadConditions = useCallback(async () => {
+    if (!location) return;
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch(
-        'https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&hourly=temperature_2m,precipitation_probability,wind_speed_10m' 
-      );
-      
-      if (!response.ok) {
-        throw new Error('Weather data fetch failed');
-      }
-      
-      const data: WeatherData = await response.json();
-      setWeatherData(data);
-
-      const iconResponse = await fetch(
-        'https://api.openweathermap.org/data/2.5/weather?lat=52.52&lon=13.41&appid=a5166d630224309d6598970cb1680515'
-      ); //
-      const iconData = await iconResponse.json(); //
-      const iconCode = iconData.weather[0].icon; //
-      const iconDescription = iconData.weather[0].description; //
-      setIconUrl(`https://openweathermap.org/img/wn/${iconCode}@2x.png`); // 
-
+      setConditions(await fetchConditions(location.lat, location.lon));
     } catch (err) {
-      setError('Failed to fetch weather data');
-      console.error(err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch weather data');
     } finally {
       setLoading(false);
     }
-  };
-  const crop1Function = () => {
-    return (
-      <CropImageViewer imgSource={crop1} />
-    );
-    console.log('crop1');
+  }, [location]);
+
+  useEffect(() => {
+    void loadConditions();
+  }, [loadConditions]);
+
+  const loadAdvice = async () => {
+    if (!location) return;
+    setAdviceLoading(true);
+    setAdviceError(null);
+    try {
+      setAdvice(await fetchRecommendations(location.lat, location.lon));
+    } catch (err) {
+      setAdviceError(err instanceof Error ? err.message : 'Could not get recommendations');
+    } finally {
+      setAdviceLoading(false);
+    }
   };
 
   const renderWeatherData = () => {
-    if (loading) {
+    if (!location || (loading && !conditions)) {
       return <Text style={styles.weatherText}>Loading weather data...</Text>;
     }
 
@@ -87,26 +84,67 @@ export default function Index() {
       return <Text style={styles.errorText}>{error}</Text>;
     }
 
-    if (weatherData) {
-      const currentHourIndex = new Date().getHours();
-      const currentTemp = weatherData.hourly.temperature_2m[currentHourIndex];
-      const currentPrecip = weatherData.hourly.precipitation_probability[currentHourIndex]; //
-      const currentWind = weatherData.hourly.wind_speed_10m[currentHourIndex];  // 
+    if (conditions) {
+      const { current, daily } = conditions.weather;
+      const soil = conditions.soil;
 
       return (
-        <View style={styles.weatherContainer}>
-          <Text style={styles.weatherText}><Ionicons name={'thermometer-outline'} color={'#376443'} size={24} />{currentTemp}°C</Text>
-          <Text style={styles.weatherText}><Ionicons name={'water-outline'} color={'#376443'} size={24} /> {currentPrecip}%</Text> 
-          <Text style={styles.weatherText}><FontAwesome5 name="wind" size={24} color={'#376443'} /> {currentWind} mph</Text>
-          <View style={styles.weatherIcon}>
-            <Text style={styles.weatherText}>{iconUrl && (<Image source={{ uri: iconUrl }} style={styles.weatherIcon} />)}</Text>
-          </View>
-          {/* <Text style={styles.weatherText}>{iconDescription}</Text> */}
+        <View>
+          <Text style={styles.locationText}>{location.label}</Text>
+          <Ionicons name={weatherIcon(current.weather_code)} size={44} color={'#376443'} style={styles.weatherIcon} />
+          <Text style={styles.weatherText}><Ionicons name={'thermometer-outline'} color={'#376443'} size={24} />{current.temperature_c}°C</Text>
+          <Text style={styles.weatherText}><Ionicons name={'water-outline'} color={'#376443'} size={24} /> {current.humidity_pct}% humidity · {daily.precipitation_mm[0] ?? 0} mm rain today</Text>
+          <Text style={styles.weatherText}><FontAwesome5 name="wind" size={24} color={'#376443'} /> {current.wind_mph} mph</Text>
+          {soil?.root_zone_soil_wetness != null && (
+            <Text style={styles.weatherText}>
+              <Ionicons name={'leaf-outline'} color={'#376443'} size={24} /> Soil moisture {Math.round(soil.root_zone_soil_wetness * 100)}% · {soil.precipitation_total_mm} mm rain in {soil.period_days} days (NASA)
+            </Text>
+          )}
         </View>
       );
     }
 
     return null;
+  };
+
+  const renderPestRisk = () => {
+    if (!conditions) return null;
+    return (
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Disease risk this week</Text>
+        {conditions.pest_risk.map((r) => (
+          <View key={r.crop} style={styles.riskRow}>
+            <Text style={styles.riskCrop}>{capitalize(r.crop)} · {r.threat}</Text>
+            <Text style={[styles.badge, { backgroundColor: RISK_COLORS[r.risk] }]}>{r.risk}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderAdvice = () => {
+    if (adviceLoading) return <ActivityIndicator color="#376443" style={{ margin: 10 }} />;
+    if (adviceError) return <Text style={styles.errorText}>{adviceError}</Text>;
+    if (!advice) return null;
+    const { summary, crops, soil_treatments } = advice.recommendations;
+    return (
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>
+          Crop advice {advice.source === 'openai' ? '(AI)' : '(rule-based)'}
+        </Text>
+        <Text style={styles.adviceText}>{summary}</Text>
+        {crops.map((c) => (
+          <View key={c.crop} style={styles.adviceItem}>
+            <Text style={[styles.badge, { backgroundColor: SUITABILITY_COLORS[c.suitability] }]}>{c.suitability}</Text>
+            <Text style={styles.adviceText}><Text style={styles.bold}>{c.crop}: </Text>{c.reason}</Text>
+          </View>
+        ))}
+        <Text style={[styles.cardTitle, { marginTop: 8 }]}>Soil</Text>
+        {soil_treatments.map((t) => (
+          <Text key={t.action} style={styles.adviceText}><Text style={styles.strong}>{t.action}: </Text>{t.reason}</Text>
+        ))}
+      </View>
+    );
   };
 
   // images for the crops
@@ -130,17 +168,26 @@ export default function Index() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       {/* Image shows up regarding to the weather */}
       <View style={styles.weatherContainer}>
         {renderWeatherData()}
       </View>
       {/* <View style={styles.footerContainer}> */}
         <View style={styles.buttonContainer}>
-          <Pressable style={styles.button} onPress={fetchWeather}>
-            <Text style={styles.buttonLabelweather}>{'Weather'}</Text>
+          <Pressable style={styles.button} onPress={loadConditions} disabled={loading}>
+            <Text style={styles.buttonLabelweather}>{loading ? 'Refreshing...' : 'Refresh weather'}</Text>
           </Pressable>
         </View>
+
+      {renderPestRisk()}
+
+      <View style={styles.buttonContainer}>
+        <Pressable style={styles.button} onPress={loadAdvice} disabled={!location || adviceLoading}>
+          <Text style={styles.buttonLabelweather}>{'Get crop advice'}</Text>
+        </Pressable>
+      </View>
+      {renderAdvice()}
       {/* </View> */}
       {/* <View style={styles.footerContainer}> */}
 
@@ -189,18 +236,19 @@ export default function Index() {
           </View>
         </View>
       </Modal>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
   },
-  imageContainer: {
-    flex: 1,
+  container: {
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    paddingBottom: 24,
   },
   footerContainer: {
     flex: 1,
@@ -224,6 +272,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginVertical: 5,
     textAlign: 'center',
+  },
+  locationText: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
+  },
+  card: {
+    width: '90%',
+    padding: 12,
+    marginVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#376443',
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#376443',
+    marginBottom: 6,
+  },
+  riskRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginVertical: 3,
+  },
+  riskCrop: {
+    fontSize: 15,
+    flexShrink: 1,
+  },
+  badge: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    overflow: 'hidden',
+    textTransform: 'uppercase',
+    flexShrink: 0,
+    alignSelf: 'flex-start',
+  },
+  adviceItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginVertical: 4,
+  },
+  adviceText: {
+    fontSize: 15,
+    flexShrink: 1,
+    marginVertical: 2,
+  },
+  bold: {
+    fontWeight: 'bold',
+    textTransform: 'capitalize',
+  },
+  strong: {
+    fontWeight: 'bold',
   },
   errorText: {
     color: 'red',

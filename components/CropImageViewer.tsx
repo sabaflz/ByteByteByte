@@ -1,9 +1,9 @@
-import { StyleSheet, ViewStyle } from "react-native";
-import { Image } from "expo-image";
+import { StyleSheet } from "react-native";
+import { Image, type ImageStyle } from "expo-image";
 
 type Props = {
     imgSource: string;
-    style?: ViewStyle;
+    style?: ImageStyle;
 };
 
 export default function CropImageViewer({ imgSource, style }: Props) {

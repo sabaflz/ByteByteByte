@@ -24,6 +24,9 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
+  imageContainer: {
+    alignItems: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff',
