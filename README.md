@@ -1,50 +1,67 @@
-# Welcome to your Expo app 👋
+# Starvest
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native (Expo) app that helps small farms decide what to grow and when to watch for crop disease, using live weather, NASA satellite-derived soil data and AI recommendations.
 
-## Get started
+## Architecture
 
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+Expo app (React Native)
+   │  GET /api/conditions?lat=&lon=      POST /api/recommendations {lat, lon}
+   ▼
+Flask backend (async views)
+   ├─ Open-Meteo        7-day hourly forecast            ┐ fetched concurrently
+   ├─ NASA POWER        30 days of soil wetness, rain,   ┘ (httpx + asyncio.gather)
+   │                    temperature, solar radiation
+   ├─ TTL cache         per source, keyed by location rounded to ~1 km
+   │                    (forecast 30 min, NASA 12 h, AI answers 1 h)
+   ├─ Pest risk         weather rules per crop (Hutton criteria for potato late blight)
+   └─ OpenAI API        structured crop + soil-treatment recommendations
+                        (rule-based fallback when no key or the call fails)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Run the backend
 
-## Learn more
+```bash
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env            # optional: add OPENAI_API_KEY for AI advice
+flask --app app run --host 0.0.0.0 --port 5000
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+Without an OpenAI key the app still works and shows rule-based advice.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Run the tests (no network or API keys needed):
 
-## Join the community
+```bash
+cd backend && python -m pytest
+```
 
-Join our community of developers creating universal apps
+## Run the app
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm install
+npx expo start
+```
+
+The app finds the backend at the same machine Expo is served from, on port 5000, so a phone on the same Wi-Fi works without configuration. To point it somewhere else:
+
+```bash
+EXPO_PUBLIC_API_URL=https://your-backend.example.com npx expo start
+```
+
+## API
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/health` | `{"status": "ok"}` |
+| `GET /api/conditions?lat=&lon=` | current weather, 7-day forecast, NASA soil data, per-crop disease risk, cache hits, warnings |
+| `POST /api/recommendations` `{lat, lon}` | per-crop suitability with reasons, soil treatments, summary, and `source` (`openai` or `rules`) |
+
+## Data sources
+
+- [Open-Meteo](https://open-meteo.com/): forecast, no key required
+- [NASA POWER](https://power.larc.nasa.gov/): daily agroclimatology data (community `AG`), no key required. Soil wetness is a 0-1 fraction for the surface and root zone
+- [OpenAI API](https://platform.openai.com/): optional, set `OPENAI_API_KEY` and `OPENAI_MODEL`
+
+The disease risk rules are simple weather heuristics for prioritizing scouting, not a validated disease model.
