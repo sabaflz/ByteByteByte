@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from services import pest_risk
 from services.data_sources import DataSourceError, get_conditions
 
 load_dotenv()
@@ -48,7 +49,9 @@ def create_app() -> Flask:
 	@app.get("/api/conditions")
 	async def conditions():
 		lat, lon = parse_location(request.args)
-		return jsonify(await get_conditions(lat, lon))
+		data = await get_conditions(lat, lon)
+		data["pest_risk"] = pest_risk.assess(data["weather"]["hourly"])
+		return jsonify(data)
 
 	return app
 
